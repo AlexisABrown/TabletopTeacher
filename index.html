@@ -2,10 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My HTML Template</title>
+    <title>Helper</title>
 </head>
 <body>
     <h1>Tabletop Teacher</h1>
+     <img src="images/desktop.jpg" alt="desktop" usemap="#workmap">
+<map name="workmap">
+// Will need to auto resize image map for different sized screens
+  <area shape="rect" coords="129,11,276,178" alt="Tablet" href="computer.htm" onclick="myFunction()">
+  <area shape="rect" coords="175,303,463,305" alt="Notebook" href="phone.htm" onclick="myFunction()">
+  <area shape="react" coords="257,614,379,516" alt="Glasses" href="coffee.htm" onclick="myFunction()">
+</map> 
     <p>This is the first paragraph of the body.</p>
     <p>This is the second paragraph, providing more information.</p>
     // Add a loop that displays different js functions based on a button selection

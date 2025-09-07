@@ -1,6 +1,11 @@
 const settings = ["urban", "forest", "dungeon"];
 const enemies = ["Goblin", "Orc", "Dragon"];
 const difficulties = ["Easy", "Medium", "Hard"];
+
+function myFunction() {
+  alert("You clicked the coffee cup!");
+}
+
 function getRandomElement(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
 }
