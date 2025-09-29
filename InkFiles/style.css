@@ -3,8 +3,8 @@
 body {
     font-family: 'Open Sans', sans-serif;
     font-weight: lighter;
-    background: white;
-    overflow: hidden;
+    background: rgb(192, 98, 98);
+    /* overflow: hidden; */
 }
 
 @media screen and (prefers-reduced-motion: no-preference) {
@@ -303,4 +303,41 @@ body.dark {
 
 .dark #controls {
     background: black;
+}
+
+/* Drag and Drop Style Info */
+.choice-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1em;
+}
+.choice {
+    background: #974a4a;
+    margin: 0 1em;
+    padding: 0.5em 1em;
+    border-radius: 4px;
+    cursor: grab;
+    user-select: none;
+}
+.selected-drop {
+    min-width: 150px;
+    min-height: 2em;
+    background: #f8f8f8;
+    border: 2px dashed #bbb;
+    margin-left: 1em;
+    padding: 0.5em;
+    border-radius: 4px;
+    text-align: center;
+}
+.selected-drop.dragover {
+    border-color: #2196f3;
+    background: #e3f2fd;
+}
+.selected-drop .choice {
+    cursor: default;
+    margin: 0;
+    background: #bbb;
+}
+.selected-drop .choice:hover {
+    background: #bbb;
 }
