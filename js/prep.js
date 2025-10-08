@@ -28,7 +28,7 @@ function getTwoRandomNPCs() {
 function getTwoRandomHooks(setting) {
     let [h1, h2] = getTwoRandom(hooks);
     return [h1 + setting, h2 + setting];
-}
+}  
 
 function createChoiceRow(category, choices) {
     return `

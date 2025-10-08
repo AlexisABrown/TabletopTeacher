@@ -4,34 +4,121 @@ body {
     font-family: 'Open Sans', sans-serif;
     font-weight: lighter;
     background: rgb(192, 98, 98);
-    /* overflow: hidden; */
-}
-
-@media screen and (prefers-reduced-motion: no-preference) {
-    body.switched {
-        transition: color 0.6s, background-color 0.6s;
-    }
-}
-
-h1,
-h2 {
-    text-align: center;
-    font-family: "Quattrocento", Georgia, 'Times New Roman', Times, serif;
     margin: 0;
     padding: 0;
+    min-height: 100vh;
 }
 
 h1 {
-    font-size: 30pt;
+    font-size: 2.2rem;
     margin-bottom: 10px;
 }
 
 h2 {
-    font-size: 14pt;
-    font-style: italic;
-    font-family: sans-serif;
-    font-weight: lighter;
-    color: #BBB;
+    font-size: 1.2rem;
+}
+
+.container {
+    display: block;
+    max-width: 95vw;
+    width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    padding-top: 4em;
+    background: white;
+    box-sizing: border-box;
+}
+
+img {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Responsive drag-and-drop choices */
+.choice-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1em;
+    flex-wrap: wrap;
+    gap: 0.5em;
+}
+
+.choice {
+    background: #974a4a;
+    margin: 0 0.5em;
+    padding: 0.5em 1em;
+    border-radius: 4px;
+    cursor: grab;
+    user-select: none;
+    color: #fff;
+    font-size: 1rem;
+    min-width: 90px;
+    text-align: center;
+    flex: 1 1 120px;
+    box-sizing: border-box;
+}
+
+.selected-drop {
+    min-width: 120px;
+    min-height: 2em;
+    background: #f8f8f8;
+    border: 2px dashed #bbb;
+    padding: 0.5em;
+    border-radius: 4px;
+    text-align: center;
+    flex: 1 1 140px;
+    box-sizing: border-box;
+    margin-left: 0.5em;
+}
+
+.selected-drop.dragover {
+    border-color: #2196f3;
+    background: #e3f2fd;
+}
+
+.selected-drop .choice {
+    cursor: default;
+    margin: 0;
+    background: #bbb;
+}
+
+.selected-drop .choice:hover {
+    background: #bbb;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 800px) {
+    .container {
+        width: 98vw;
+        padding: 10px;
+    }
+    .choice-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5em;
+    }
+    .choice, .selected-drop {
+        min-width: 80px;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 500px) {
+    h1 {
+        font-size: 1.3rem;
+    }
+    h2 {
+        font-size: 1rem;
+    }
+    .container {
+        padding: 5px;
+    }
+    .choice, .selected-drop {
+        font-size: 0.9rem;
+        padding: 0.4em 0.5em;
+    }
 }
 
 .header {
@@ -40,7 +127,7 @@ h2 {
 }
 
 /*
-  Built-in class:
+  Built-in class:   
     # author: Name
 */
 .byline {
