@@ -4,8 +4,23 @@
     <meta charset="UTF-8">
     <title>Helper</title>
     <link rel="stylesheet" href="InkFiles/style.css">
+    <script>
+        // Configure the mailing list endpoint
+        window.MAILING_LIST_ENDPOINT = 'http://localhost:3000/subscribe';
+    </script>
 </head>
 <body>
+    <div class="mailing-list-container">
+        <form id="mailing-list-form" onsubmit="return handleMailingListSubmit(event)">
+            <label for="email">Join our mailing list for updates:</label>
+            <div class="input-group">
+                <input type="email" id="email" name="email" placeholder="Enter your email address" required aria-describedby="emailHelp">
+                <button type="submit">Subscribe</button>
+            </div>
+            <!-- Inline feedback element for validation or success messages -->
+            <div id="mailing-feedback" class="ml-error" role="status" aria-live="polite"></div>
+        </form>
+    </div>
     <h1>Tabletop Teacher</h1>
      <img src="images/desktop.jpg" alt="desktop" usemap="#workmap">
 <map name="workmap">
