@@ -16,10 +16,8 @@ const { subscribeLimiter, loginLimiter } = require('./middleware/rateLimiter');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('MongoDB connection error:', err));
+// NOTE: connect when starting the server (see start())
+// We avoid starting DB operations until the connection is established
 
 // Middleware
 app.use(cors());
@@ -174,10 +172,26 @@ app.post('/admin/subscribers/:id/resend-verification', authMiddleware, async (re
 
 // Initialize and start server
 async function start() {
-    await ensureAdminExists();
-    app.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
-    });
+    try {
+        console.log('Connecting to MongoDB...');
+        // await the mongoose connection before doing any DB work
+        await mongoose.connect(process.env.MONGODB_URI, {
+            // mongoose 7+ uses sensible defaults, but explicit options are harmless
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
+        console.log('Connected to MongoDB');
+
+        // Now it's safe to create initial admin user (DB is available)
+        await ensureAdminExists();
+
+        app.listen(PORT, () => {
+            console.log(`Server running on http://localhost:${PORT}`);
+        });
+    } catch (err) {
+        console.error('Failed to start server:', err);
+        process.exit(1);
+    }
 }
 
 start().catch(console.error);
