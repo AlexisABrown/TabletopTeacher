@@ -87,8 +87,47 @@ async function handleMailingListSubmit(event) {
 }
 
 const settings = ["urban", "forest", "dungeon"];
-const enemies = ["Goblin", "Orc", "Dragon"];
 const difficulties = ["Easy", "Medium", "Hard"];
+
+// Cached monsters data
+let monstersData = null;
+
+// Load monsters from JSON file
+async function loadMonsters() {
+    if (monstersData) return monstersData;
+    
+    try {
+        const response = await fetch('/InkFiles/srd_5e_monsters.json');
+        monstersData = await response.json();
+        return monstersData;
+    } catch (error) {
+        console.error('Failed to load monsters:', error);
+        // Fallback monsters if JSON fails to load
+        return [
+            { name: "Goblin", difficulty: "Easy" },
+            { name: "Orc", difficulty: "Medium" },
+            { name: "Dragon", difficulty: "Hard" }
+        ];
+    }
+}
+
+// Get monsters appropriate for the difficulty level
+function getMonstersByDifficulty(monsters, difficulty) {
+    // Simple difficulty mapping based on HP as a rough gauge
+    const difficultyRanges = {
+        'Easy': { min: 0, max: 50 },
+        'Medium': { min: 51, max: 100 },
+        'Hard': { min: 101, max: Infinity }
+    };
+
+    const range = difficultyRanges[difficulty];
+    return monsters.filter(monster => {
+        // Extract the base HP number from the "Hit Points" string
+        const hpMatch = monster["Hit Points"]?.match(/(\d+)/);
+        const hp = hpMatch ? parseInt(hpMatch[1]) : 0;
+        return hp >= range.min && hp <= range.max;
+    });
+}
 const hooks = [
     "A mysterious event occurs in the ",
     "A stranger arrives in the ",
@@ -128,13 +167,18 @@ function createChoiceRow(category, choices) {
     `;
 }
 
-function renderChoices() {
+async function renderChoices() {
     // Generate two options for each category
     const settingChoices = getTwoRandom(settings);
-    const enemyChoices = getTwoRandom(enemies);
     const difficultyChoices = getTwoRandom(difficulties);
     const npcChoices = getTwoRandomNPCs();
     const hookChoices = getTwoRandomHooks(settingChoices[0]); // Use first setting for hooks
+
+    // Load and filter monsters based on random difficulty
+    const monsters = await loadMonsters();
+    const randomDifficulty = difficultyChoices[Math.floor(Math.random() * difficultyChoices.length)];
+    const difficultySuitableMonsters = getMonstersByDifficulty(monsters, randomDifficulty);
+    const enemyChoices = getTwoRandom(difficultySuitableMonsters.map(m => m.name));
 
     let html = '';
     html += createChoiceRow('setting', settingChoices);
@@ -214,6 +258,10 @@ function enableDownload(session) {
 }
 
 // Initial render
-document.getElementById('finalSession').innerHTML = '';
-renderChoices();
-enableDragAndDrop()
+async function init() {
+    document.getElementById('finalSession').innerHTML = '';
+    await renderChoices();
+    enableDragAndDrop();
+}
+
+init();
