@@ -1,90 +1,3 @@
-// RFC-style email validation helper
-function isValidEmail(email) {
-    if (!email) return false;
-    // overall length limit (RFC recommends 256 but practical limit is 254)
-    if (email.length > 254) return false;
-
-    // local-part length limit
-    const parts = email.split('@');
-    if (parts.length !== 2) return false;
-    if (parts[0].length > 64) return false;
- 
-    // Regex that follows the RFC 5322-ish pattern
-    // Accepts quoted local-parts and domain literals. 
-    const rfc5322 = /^(?:[a-zA-Z0-9!#$%&'*+\-/=?^_`{|}~]+(?:\.[a-zA-Z0-9!#$%&'*+\-/=?^_`{|}~]+)*|"(?:\\[\x00-\x7f]|[^"\\])*")@(?:(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}|\[(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d?\d)){3}|[A-Za-z0-9-]*[A-Za-z0-9]:[!#-\[\]-~]+)\])$/;
-
-    return rfc5322.test(email);
-}
-
-// Handle mailing list submission with inline validation and simulated async submit.
-async function handleMailingListSubmit(event) {
-    event.preventDefault();
-    const emailInput = document.getElementById('email');
-    const feedback = document.getElementById('mailing-feedback');
-    const form = document.getElementById('mailing-list-form');
-    const submitBtn = form.querySelector('button[type="submit"]');
-
-    // Clear previous feedback
-    if (feedback) {
-        feedback.textContent = '';
-        feedback.className = '';
-    }
-    emailInput.setAttribute('aria-invalid', 'false');
-
-    const email = (emailInput.value || '').trim();
-    if (!isValidEmail(email)) {
-        if (feedback) {
-            feedback.textContent = 'Please enter a valid email address.';
-            feedback.className = 'ml-error';
-        } else {
-            alert('Please enter a valid email address.');
-        }
-        emailInput.setAttribute('aria-invalid', 'true');
-        emailInput.focus();
-        return false;
-    }
-
-    // Disable submit to prevent double submissions
-    if (submitBtn) submitBtn.disabled = true;
-
-    try {
-        // If you have a real backend endpoint, set window.MAILING_LIST_ENDPOINT = 'https://your.api/subscribe'
-        const endpoint = window.MAILING_LIST_ENDPOINT || '/subscribe';
-
-        if (endpoint === '/subscribe') {
-            // No backend configured: simulate network delay and success
-            await new Promise((resolve) => setTimeout(resolve, 700));
-        } else {
-            // Attempt a real network POST
-            const res = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
-            });
-            if (!res.ok) throw new Error('Network response was not ok');
-        }
-
-        if (feedback) {
-            feedback.textContent = 'Thanks for subscribing! Check your inbox for a confirmation.';
-            feedback.className = 'ml-success';
-        } else {
-            alert('Thanks for subscribing!');
-        }
-        emailInput.value = '';
-    } catch (err) {
-        console.error('Mailing list signup failed:', err);
-        if (feedback) {
-            feedback.textContent = 'Sorry — we could not sign you up right now. Please try again later.';
-            feedback.className = 'ml-error';
-        } else {
-            alert('Signup failed. Please try again later.');
-        }
-    } finally {
-        if (submitBtn) submitBtn.disabled = false;
-    }
-
-    return false;
-}
 
 const settings = ["urban", "forest", "dungeon"];
 const difficulties = ["Easy", "Medium", "Hard"];
@@ -113,17 +26,51 @@ async function loadMonsters() {
 
 // Get monsters appropriate for the difficulty level
 function getMonstersByDifficulty(monsters, difficulty) {
-    // Simple difficulty mapping based on HP as a rough gauge
+    // Prefer using Challenge Rating (CR) when present in the JSON.
+    // CR in the SRD file looks like: "1/4 (50 XP)" or "10 (5,900 XP)".
+    function parseCR(monster) {
+        const raw = monster['Challenge'] || monster['CR'] || '';
+        if (!raw) return null;
+        // Extract the leading part before space or parentheses
+        const m = raw.match(/^([^\s(]+)/);
+        if (!m) return null;
+        const cr = m[1];
+        // Handle fractional CR like "1/2", "1/4"
+        if (cr.includes('/')) {
+            const [num, den] = cr.split('/').map(Number);
+            if (!isNaN(num) && !isNaN(den) && den !== 0) return num / den;
+            return null;
+        }
+        const n = Number(cr);
+        return isNaN(n) ? null : n;
+    }
+
+    // Map CR to difficulty buckets. Tunable if you'd like different thresholds.
+    const buckets = {
+        'Easy': (cr) => cr !== null && cr <= 1,
+        'Medium': (cr) => cr !== null && cr > 1 && cr <= 8,
+        'Hard': (cr) => cr !== null && cr > 8
+    };
+
+    const predicate = buckets[difficulty];
+    if (!predicate) return monsters;
+
+    // First try CR-based filtering
+    const byCR = monsters.filter(m => {
+        const cr = parseCR(m);
+        return predicate(cr);
+    });
+    if (byCR.length > 0) return byCR;
+
+    // Fallback: use HP-based heuristic if CR isn't available
     const difficultyRanges = {
         'Easy': { min: 0, max: 50 },
         'Medium': { min: 51, max: 100 },
         'Hard': { min: 101, max: Infinity }
     };
-
     const range = difficultyRanges[difficulty];
     return monsters.filter(monster => {
-        // Extract the base HP number from the "Hit Points" string
-        const hpMatch = monster["Hit Points"]?.match(/(\d+)/);
+        const hpMatch = monster['Hit Points']?.match(/(\d+)/);
         const hp = hpMatch ? parseInt(hpMatch[1]) : 0;
         return hp >= range.min && hp <= range.max;
     });
@@ -178,7 +125,27 @@ async function renderChoices() {
     const monsters = await loadMonsters();
     const randomDifficulty = difficultyChoices[Math.floor(Math.random() * difficultyChoices.length)];
     const difficultySuitableMonsters = getMonstersByDifficulty(monsters, randomDifficulty);
-    const enemyChoices = getTwoRandom(difficultySuitableMonsters.map(m => m.name));
+
+    // Build a list of candidate names (filter out undefined names)
+    let candidateNames = difficultySuitableMonsters.map(m => m && m.name).filter(Boolean);
+
+    // If we don't have enough candidates for this difficulty, fall back to the full monster list
+    if (candidateNames.length < 2) {
+        const allNames = monsters.map(m => m && m.name).filter(Boolean);
+        // Merge unique names, preferring difficulty candidates first
+        const nameSet = new Set(candidateNames);
+        for (const n of allNames) {
+            if (nameSet.size >= 2) break;
+            if (!nameSet.has(n)) nameSet.add(n);
+        }
+        candidateNames = Array.from(nameSet);
+    }
+
+    // Ensure we have at least two names (duplicate if only one available)
+    if (candidateNames.length === 0) candidateNames = ["Goblin", "Orc"];
+    if (candidateNames.length === 1) candidateNames.push(candidateNames[0]);
+
+    const enemyChoices = getTwoRandom(candidateNames);
 
     let html = '';
     html += createChoiceRow('setting', settingChoices);
@@ -257,11 +224,14 @@ function enableDownload(session) {
     };
 }
 
-// Initial render
+// Only initialize the generator if we're on the generator page
 async function init() {
-    document.getElementById('finalSession').innerHTML = '';
-    await renderChoices();
-    enableDragAndDrop();
+    // Check if we're on the generator page by looking for necessary elements
+    if (document.getElementById('sessionOutput')) {
+        document.getElementById('finalSession').innerHTML = '';
+        await renderChoices();
+        enableDragAndDrop();
+    }
 }
 
 init();
