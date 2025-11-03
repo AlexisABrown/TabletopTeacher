@@ -163,6 +163,40 @@ img {
     background: #bbb;
 }
 
+/* Monster details styling */
+.monster-details {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: #fffaf0;
+    border: 1px solid #e0d7c5;
+    padding: 12px;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    margin: 8px 0 16px 0;
+}
+.monster-details .monster-image img {
+    max-width: 220px;
+    max-height: 220px;
+    display: block;
+    border-radius: 4px;
+}
+.monster-details .monster-meta h3 {
+    margin: 0 0 6px 0;
+    font-size: 1.1rem;
+}
+.monster-details .monster-meta p {
+    margin: 4px 0;
+    color: #333;
+}
+.monster-details .monster-meta ul { margin: 6px 0 6px 18px; }
+
+@media (max-width: 700px) {
+    .monster-details { flex-direction: column; align-items: center; }
+    .monster-details .monster-image img { max-width: 80%; height: auto; }
+    .monster-details .monster-meta { text-align: left; width: 100%; }
+}
+
 /* Responsive adjustments for smaller screens */
 @media (max-width: 800px) {
     .container {

@@ -126,26 +126,28 @@ async function renderChoices() {
     const randomDifficulty = difficultyChoices[Math.floor(Math.random() * difficultyChoices.length)];
     const difficultySuitableMonsters = getMonstersByDifficulty(monsters, randomDifficulty);
 
-    // Build a list of candidate names (filter out undefined names)
-    let candidateNames = difficultySuitableMonsters.map(m => m && m.name).filter(Boolean);
+    // Build a list of candidate monster objects (filter out undefined names)
+    let candidateMonsters = difficultySuitableMonsters.filter(m => m && m.name);
 
     // If we don't have enough candidates for this difficulty, fall back to the full monster list
-    if (candidateNames.length < 2) {
-        const allNames = monsters.map(m => m && m.name).filter(Boolean);
+    if (candidateMonsters.length < 2) {
+        const allMonsters = monsters.filter(m => m && m.name);
         // Merge unique names, preferring difficulty candidates first
-        const nameSet = new Set(candidateNames);
-        for (const n of allNames) {
+        const nameSet = new Set(candidateMonsters.map(m => m.name));
+        for (const m of allMonsters) {
             if (nameSet.size >= 2) break;
-            if (!nameSet.has(n)) nameSet.add(n);
+            if (!nameSet.has(m.name)) {
+                candidateMonsters.push(m);
+                nameSet.add(m.name);
+            }
         }
-        candidateNames = Array.from(nameSet);
     }
 
-    // Ensure we have at least two names (duplicate if only one available)
-    if (candidateNames.length === 0) candidateNames = ["Goblin", "Orc"];
-    if (candidateNames.length === 1) candidateNames.push(candidateNames[0]);
+    // Ensure we have at least two monsters (duplicate if only one available)
+    if (candidateMonsters.length === 0) candidateMonsters = [{ name: "Goblin" }, { name: "Orc" }];
+    if (candidateMonsters.length === 1) candidateMonsters.push(candidateMonsters[0]);
 
-    const enemyChoices = getTwoRandom(candidateNames);
+    const enemyChoices = getTwoRandom(candidateMonsters);
 
     let html = '';
     html += createChoiceRow('setting', settingChoices);
@@ -203,23 +205,161 @@ function checkIfAllSelected() {
     }
 }
 
+function renderMonsterDetails(monster) {
+    if (!monster) return '<div class="monster-details">No monster data available.</div>';
+    // Try common image keys
+    const imgKeys = ['Image', 'image', 'ImageURL', 'image_url', 'img', 'imageUrl'];
+    let imgSrc = null;
+    for (const k of imgKeys) {
+        if (monster[k]) { imgSrc = monster[k]; break; }
+    }
+
+    let html = '<div class="monster-details" style="display:flex;gap:12px;align-items:flex-start">';
+    if (imgSrc) {
+        // allow relative or absolute paths
+        html += `<div class="monster-image"><img src="${imgSrc}" alt="${monster.name || 'monster'}" style="max-width:200px;max-height:200px;object-fit:contain;border:1px solid #ccc;padding:4px"></div>`;
+    }
+    html += '<div class="monster-meta">';
+    html += `<h3>${monster.name || 'Unknown Monster'}</h3>`;
+    const fields = ['Challenge','CR','Armor Class','Hit Points','Speed','Senses','Languages','Actions','Special Abilities','Legendary Actions'];
+    for (const f of fields) {
+        if (monster[f]) {
+            const val = monster[f];
+            if (Array.isArray(val)) {
+                html += `<p><strong>${f}:</strong></p><ul>`;
+                for (const item of val) {
+                    // some entries may be objects with name/desc
+                    if (typeof item === 'object') html += `<li>${item.name || JSON.stringify(item)}</li>`;
+                    else html += `<li>${item}</li>`;
+                }
+                html += '</ul>';
+            } else {
+                html += `<p><strong>${f}:</strong> ${val}</p>`;
+            }
+        }
+    }
+    html += '</div></div>';
+    return html;
+}
+
 function showSession(session) {
     let html = `<h2>Your Session</h2>`;
     html += `<p><strong>Setting:</strong> ${session.setting}</p>`;
     html += `<p><strong>Hook:</strong> ${session.hook}</p>`;
     html += `<p><strong>NPC:</strong> ${session.npc.name} - ${session.npc.role}<br>Dialogue: ${session.npc.dialogue}</p>`;
-    html += `<p><strong>Enemy:</strong> ${session.enemy}</p>`;
     html += `<p><strong>Difficulty:</strong> ${session.difficulty}</p>`;
+
+    html += `<h3>Enemy</h3>`;
+    if (typeof session.enemy === 'object') {
+        html += renderMonsterDetails(session.enemy);
+    } else {
+        html += `<p>${session.enemy}</p>`;
+    }
+
     document.getElementById('finalSession').innerHTML = html;
 }
 
 function enableDownload(session) {
-    document.getElementById('downloadSessionBtn').onclick = function () {
+    document.getElementById('downloadSessionBtn').onclick = async function () {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        let text = `Session\nSetting: ${session.setting}\nHook: ${session.hook}\nNPC: ${session.npc.name} - ${session.npc.role}\nDialogue: ${session.npc.dialogue}\nEnemy: ${session.enemy}\nDifficulty: ${session.difficulty}`;
-        const lines = doc.splitTextToSize(text, 180);
-        doc.text(lines, 10, 10);
+
+        // helper: fetch image and convert to dataURL
+        async function fetchImageAsDataUrl(url) {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) return null;
+                const blob = await res.blob();
+                const arrayBuffer = await blob.arrayBuffer();
+                const bytes = new Uint8Array(arrayBuffer);
+                let binary = '';
+                const chunkSize = 0x8000;
+                for (let i = 0; i < bytes.length; i += chunkSize) {
+                    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)));
+                }
+                const base64 = btoa(binary);
+                const mime = blob.type || 'image/png';
+                return { dataUrl: `data:${mime};base64,${base64}`, mime };
+            } catch (err) {
+                console.warn('Failed to fetch image for PDF:', err);
+                return null;
+            }
+        }
+
+        function getMonsterImageUrl(monster) {
+            if (!monster) return null;
+            const imgKeys = ['Image', 'image', 'ImageURL', 'image_url', 'img', 'imageUrl'];
+            for (const k of imgKeys) if (monster[k]) return monster[k];
+            return null;
+        }
+
+        function measureImage(dataUrl) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = function () { resolve({ w: img.naturalWidth, h: img.naturalHeight }); };
+                img.onerror = function () { resolve(null); };
+                img.src = dataUrl;
+            });
+        }
+
+        let cursorY = 10;
+
+        // If enemy has image, try to embed at the top
+        if (typeof session.enemy === 'object') {
+            const imgUrl = getMonsterImageUrl(session.enemy);
+            if (imgUrl) {
+                const fetched = await fetchImageAsDataUrl(imgUrl);
+                if (fetched && fetched.dataUrl) {
+                    const dims = await measureImage(fetched.dataUrl);
+                    if (dims) {
+                        // Fit to width 180 (approx page width minus margins)
+                        const maxW = 180;
+                        const scale = Math.min(1, maxW / dims.w);
+                        const drawW = dims.w * scale;
+                        const drawH = dims.h * scale;
+                        const format = fetched.mime && fetched.mime.includes('png') ? 'PNG' : 'JPEG';
+                        try {
+                            doc.addImage(fetched.dataUrl, format, 10, cursorY, drawW, drawH);
+                            cursorY += drawH + 6; // add spacing after image
+                        } catch (err) {
+                            console.warn('jsPDF addImage failed:', err);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Build textual content
+        let lines = [];
+        lines.push('Session');
+        lines.push(`Setting: ${session.setting}`);
+        lines.push(`Hook: ${session.hook}`);
+        lines.push(`NPC: ${session.npc.name} - ${session.npc.role}`);
+        lines.push(`Dialogue: ${session.npc.dialogue}`);
+        lines.push(`Difficulty: ${session.difficulty}`);
+        lines.push('Enemy:');
+        if (typeof session.enemy === 'object') {
+            const m = session.enemy;
+            lines.push(`  Name: ${m.name || ''}`);
+            if (m['Challenge'] || m['CR']) lines.push(`  CR: ${m['Challenge'] || m['CR']}`);
+            if (m['Armor Class']) lines.push(`  Armor Class: ${m['Armor Class']}`);
+            if (m['Hit Points']) lines.push(`  Hit Points: ${m['Hit Points']}`);
+            if (m['Speed']) lines.push(`  Speed: ${m['Speed']}`);
+            if (m['Senses']) lines.push(`  Senses: ${m['Senses']}`);
+            if (m['Languages']) lines.push(`  Languages: ${m['Languages']}`);
+            if (m['Actions']) {
+                lines.push('  Actions:');
+                if (Array.isArray(m['Actions'])) {
+                    for (const a of m['Actions']) lines.push(`    - ${typeof a === 'object' ? (a.name || JSON.stringify(a)) : a}`);
+                } else lines.push(`    - ${m['Actions']}`);
+            }
+        } else {
+            lines.push(`  ${session.enemy}`);
+        }
+
+        const text = lines.join('\n');
+        const wrapped = doc.splitTextToSize(text, 180);
+        doc.text(wrapped, 10, cursorY || 10);
         doc.save('Session.pdf');
     };
 }
