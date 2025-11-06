@@ -2,8 +2,9 @@
 const settings = ["urban", "forest", "dungeon"];
 const difficulties = ["Easy", "Medium", "Hard"];
 
-// Cached monsters data
+// Cached data
 let monstersData = null;
+let hooksData = null;
 
 // Load monsters from JSON file
 async function loadMonsters() {
@@ -75,11 +76,28 @@ function getMonstersByDifficulty(monsters, difficulty) {
         return hp >= range.min && hp <= range.max;
     });
 }
-const hooks = [
-    "A mysterious event occurs in the ",
-    "A stranger arrives in the ",
-    "A secret is revealed in the "
-];
+// Load hooks from JSON file
+async function loadHooks() {
+    if (hooksData) return hooksData;
+    
+    try {
+        const response = await fetch('/InkFiles/hooks.json');
+        hooksData = await response.json();
+        return hooksData;
+    } catch (error) {
+        console.error('Failed to load hooks:', error);
+        // Fallback hooks if JSON fails to load
+        return {
+            hooks: {
+                urban: ["A mysterious event occurs in the ", "A stranger arrives in the "],
+                forest: ["A mysterious event occurs in the ", "A stranger appears in the "],
+                dungeon: ["A mysterious event occurs in the ", "A secret is revealed in the "]
+            },
+            custom_hooks: {}
+        };
+    }
+}
+
 const npcNames = ['Guard', 'Merchant', 'Wizard', 'Noble', 'Thief', 'Priest'];
 
 function getTwoRandom(arr) {
@@ -99,10 +117,19 @@ function getTwoRandomNPCs() {
     ];
 }
 
-function getTwoRandomHooks(setting) {
-    let [h1, h2] = getTwoRandom(hooks);
-    return [h1 + setting, h2 + setting];
-}  
+async function getTwoRandomHooks(setting) {
+    const data = await loadHooks();
+    // Combine default and custom hooks for the setting
+    const settingHooks = [
+        ...(data.hooks[setting] || []),
+        ...(data.custom_hooks[setting] || [])
+    ];
+    // Fallback if no hooks found for setting
+    if (!settingHooks.length) {
+        return ["A mysterious event occurs in", "A stranger arrives in"].map(h => h + " " + setting);
+    }
+    return getTwoRandom(settingHooks);
+}
 
 function createChoiceRow(category, choices) {
     return `
@@ -119,7 +146,7 @@ async function renderChoices() {
     const settingChoices = getTwoRandom(settings);
     const difficultyChoices = getTwoRandom(difficulties);
     const npcChoices = getTwoRandomNPCs();
-    const hookChoices = getTwoRandomHooks(settingChoices[0]); // Use first setting for hooks
+    const hookChoices = await getTwoRandomHooks(settingChoices[0]); // Use first setting for hooks
 
     // Load and filter monsters based on random difficulty
     const monsters = await loadMonsters();
@@ -184,9 +211,85 @@ function enableDragAndDrop() {
             let parsed = JSON.parse(decodeURIComponent(value));
             this.textContent = typeof parsed === 'object' ? parsed.name : parsed;
             this.dataset.value = value;
+            // If difficulty or setting was changed, update the enemy choices
+            try {
+                if (this.dataset.category === 'difficulty' || this.dataset.category === 'setting') {
+                    // call async updater but don't block drop handler
+                    updateEnemyChoices().catch(err => console.warn('updateEnemyChoices error', err));
+                }
+            } catch (err) {
+                console.warn(err);
+            }
             checkIfAllSelected();
         });
     });
+}
+
+// Update the enemy choice options based on selected difficulty and/or setting
+async function updateEnemyChoices() {
+    // Read current selections from DOM
+    const difficultyDrop = document.querySelector('.selected-drop[data-category="difficulty"]');
+    const settingDrop = document.querySelector('.selected-drop[data-category="setting"]');
+    let difficulty = null;
+    let setting = null;
+    try {
+        if (difficultyDrop && difficultyDrop.dataset.value) {
+            const val = JSON.parse(decodeURIComponent(difficultyDrop.dataset.value));
+            difficulty = typeof val === 'string' ? val : (val && val.name) || null;
+        }
+        if (settingDrop && settingDrop.dataset.value) {
+            const val = JSON.parse(decodeURIComponent(settingDrop.dataset.value));
+            setting = typeof val === 'string' ? val : (val && val.name) || null;
+        }
+    } catch (err) {
+        console.warn('Failed to read current difficulty/setting from DOM', err);
+    }
+
+    const monsters = await loadMonsters();
+
+    // Filter by difficulty first
+    let candidates = difficulty ? getMonstersByDifficulty(monsters, difficulty) : monsters.slice();
+
+    // Further filter by setting/environment if possible
+    if (setting) {
+        const envKeys = ['Environment','environment','Habitat','habitat','environments','habitats'];
+        candidates = candidates.filter(m => {
+            for (const k of envKeys) {
+                const val = m[k];
+                if (!val) continue;
+                const text = Array.isArray(val) ? val.join(' ').toLowerCase() : String(val).toLowerCase();
+                if (text.includes(setting.toLowerCase())) return true;
+            }
+            return false;
+        });
+        // If filtering by setting removed too many, fall back to difficulty candidates
+        if (candidates.length < 2) candidates = difficulty ? getMonstersByDifficulty(monsters, difficulty) : monsters.slice();
+    }
+
+    // Fallback ensure at least two
+    if (!candidates || candidates.length === 0) candidates = monsters.slice();
+    if (candidates.length === 1) candidates.push(candidates[0]);
+
+    const enemyPair = getTwoRandom(candidates);
+
+    // Update the DOM choice elements for enemy (preserve event listeners)
+    const enemyRow = document.querySelector('.choice-row[data-category="enemy"]');
+    if (!enemyRow) return;
+    const choiceDivs = enemyRow.querySelectorAll('.choice');
+    for (let i = 0; i < 2; i++) {
+        const m = enemyPair[i] || { name: 'Unknown' };
+        if (choiceDivs[i]) {
+            choiceDivs[i].dataset.value = encodeURIComponent(JSON.stringify(m));
+            choiceDivs[i].textContent = m.name || 'Unknown';
+        }
+    }
+
+    // Clear previously selected enemy choice (so user must re-pick)
+    const enemyDrop = document.querySelector('.selected-drop[data-category="enemy"]');
+    if (enemyDrop) {
+        enemyDrop.dataset.value = '';
+        enemyDrop.textContent = 'Drop your choice here';
+    }
 }
 
 function checkIfAllSelected() {
@@ -199,6 +302,9 @@ function checkIfAllSelected() {
             session[drop.dataset.category] = val;
         }
     });
+    // Include title from input if present
+    const titleInput = document.getElementById('sessionTitle');
+    if (titleInput) session.title = titleInput.value.trim();
     if (allSelected) {
         showSession(session);
         enableDownload(session);
@@ -243,7 +349,8 @@ function renderMonsterDetails(monster) {
 }
 
 function showSession(session) {
-    let html = `<h2>Your Session</h2>`;
+    let title = session.title && session.title.length ? session.title : 'Your Session';
+    let html = `<h2>${title}</h2>`;
     html += `<p><strong>Setting:</strong> ${session.setting}</p>`;
     html += `<p><strong>Hook:</strong> ${session.hook}</p>`;
     html += `<p><strong>NPC:</strong> ${session.npc.name} - ${session.npc.role}<br>Dialogue: ${session.npc.dialogue}</p>`;
@@ -272,7 +379,7 @@ function enableDownload(session) {
                 const blob = await res.blob();
                 const arrayBuffer = await blob.arrayBuffer();
                 const bytes = new Uint8Array(arrayBuffer);
-                let binary = '';
+                 let binary = '';
                 const chunkSize = 0x8000;
                 for (let i = 0; i < bytes.length; i += chunkSize) {
                     binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)));
@@ -330,8 +437,9 @@ function enableDownload(session) {
         }
 
         // Build textual content
-        let lines = [];
-        lines.push('Session');
+     let lines = [];
+    if (session.title && session.title.length) lines.push(`Title: ${session.title}`);
+    else lines.push('Session');
         lines.push(`Setting: ${session.setting}`);
         lines.push(`Hook: ${session.hook}`);
         lines.push(`NPC: ${session.npc.name} - ${session.npc.role}`);

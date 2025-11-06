@@ -30,10 +30,33 @@ mongoose.connect(process.env.MONGODB_URI, {
 // Middleware
 app.use(cors({
     origin: 'http://localhost:5000', // or whatever port your frontend is running on
-    methods: ['POST', 'GET'],
+    methods: ['POST', 'GET', 'PUT'],
     credentials: true
 }));
 app.use(express.json());
+
+// File system operations for hooks
+const fs = require('fs').promises;
+const path = require('path');
+
+// Hooks file operations
+const HOOKS_FILE = path.join(__dirname, '..', 'InkFiles', 'hooks.json');
+
+// Save hooks endpoint
+app.post('/hooks', async (req, res) => {
+    try {
+        const hooks = req.body;
+        // Basic validation
+        if (!hooks || !hooks.hooks || !hooks.custom_hooks) {
+            return res.status(400).json({ message: 'Invalid hooks data structure' });
+        }
+        await fs.writeFile(HOOKS_FILE, JSON.stringify(hooks, null, 4), 'utf8');
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Failed to save hooks:', error);
+        res.status(500).json({ message: 'Failed to save hooks' });
+    }
+});
 
 // Create initial admin user
 async function ensureAdminExists() {

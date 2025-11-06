@@ -1,0 +1,30 @@
+{
+    "hooks": {
+        "urban": [
+            "A mysterious event occurs in the urban streets of",
+            "A stranger arrives at the bustling marketplace in",
+            "A secret is revealed in the noble district of",
+            "A theft occurs at the central bank of",
+            "A conspiracy unfolds in the guildhall of"
+        ],
+        "forest": [
+            "A mysterious event occurs in the ancient woods of",
+            "A stranger emerges from the dark thicket near",
+            "A secret is revealed in the sacred grove of",
+            "Strange lights are seen in the misty forests of",
+            "Ancient runes are discovered in the deep woods of"
+        ],
+        "dungeon": [
+            "A mysterious event occurs in the forgotten halls of",
+            "A stranger is found trapped in the depths of",
+            "A secret is revealed in the ancient chambers of",
+            "Unusual sounds echo through the corridors of",
+            "Ancient magic stirs in the depths of"
+        ]
+    },
+    "custom_hooks": {
+        "urban": [
+            "test hook of"
+        ]
+    }
+}

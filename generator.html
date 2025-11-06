@@ -7,7 +7,15 @@
 </head>
 <body>
     <h1>Session Generator</h1>
-    <p><a id="backHome" href="index.html">← Back to Home</a></p>
+    <p>
+        <a id="backHome" href="index.html">← Back to Home</a>
+        <span style="margin: 0 8px">|</span>
+        <a href="InkFiles/hooks-editor.html">Manage Story Hooks</a>
+    </p>
+    <div style="max-width:600px;margin:8px auto 16px;">
+        <label for="sessionTitle" style="display:block;font-weight:bold;margin-bottom:6px">Session title</label>
+        <input id="sessionTitle" type="text" placeholder="Enter a title for your session (optional)" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px">
+    </div>
     <div id="sessionOutput"></div>
     <div id="finalSession"></div>
     <button id="downloadSessionBtn">Download Session</button>
