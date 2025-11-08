@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Campaign Notes Manager - Wireframe</title>
+    <link rel="stylesheet" href="../InkFiles/style.css">
+    <link rel="stylesheet" href="wireframe-styles.css">
+</head>
+<body>
+    <div class="wireframe-container">
+        <!-- Sidebar Navigation -->
+        <aside class="wireframe-sidebar">
+            <input type="search" class="search-bar" placeholder="Search notes...">
+            
+            <button class="action-button">+ New Note</button>
+            
+            <nav>
+                <ul class="nav-list">
+                    <li class="nav-item active">📝 Session Notes</li>
+                    <li class="nav-item">👤 NPCs</li>
+                    <li class="nav-item">🗺️ Locations</li>
+                    <li class="nav-item">📅 Timeline</li>
+                    <li class="nav-item">🏷️ Tags</li>
+                </ul>
+            </nav>
+
+            <div style="margin-top: 2rem;">
+                <h3>Quick Filters</h3>
+                <div class="tag-list">
+                    <span class="tag">Combat</span>
+                    <span class="tag">Story</span>
+                    <span class="tag">Important</span>
+                    <span class="tag">Quest</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="wireframe-main">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h1>Session Notes</h1>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="action-button" style="width: auto;">📤 Export</button>
+                    <button class="action-button" style="width: auto;">📋 Templates</button>
+                </div>
+            </div>
+
+            <!-- Note Cards Grid -->
+            <div class="card-grid">
+                <!-- Recent Session -->
+                <div class="card">
+                    <h3>Latest Session</h3>
+                    <div class="placeholder-text long"></div>
+                    <div class="placeholder-text medium"></div>
+                    <div style="margin-top: 1rem;">
+                        <span class="tag">Combat</span>
+                        <span class="tag">Quest</span>
+                    </div>
+                </div>
+
+                <!-- NPCs Involved -->
+                <div class="card">
+                    <h3>Active NPCs</h3>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div class="placeholder-text short"></div>
+                        <div class="placeholder-text medium"></div>
+                        <div class="placeholder-text short"></div>
+                    </div>
+                </div>
+
+                <!-- Location Summary -->
+                <div class="card">
+                    <h3>Current Location</h3>
+                    <div class="placeholder-image"></div>
+                    <div class="placeholder-text medium"></div>
+                </div>
+
+                <!-- Quest Tracker -->
+                <div class="card">
+                    <h3>Active Quests</h3>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div class="placeholder-text long"></div>
+                        <div class="placeholder-text medium"></div>
+                        <div class="placeholder-text short"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline View -->
+            <div style="margin-top: 3rem;">
+                <h2>Campaign Timeline</h2>
+                <div style="display: flex; align-items: center; gap: 1rem; margin-top: 1rem;">
+                    <div style="flex: 1; height: 4px; background: var(--color-light); border-radius: 2px;">
+                        <div style="width: 60%; height: 100%; background: var(--color-accent); border-radius: 2px;"></div>
+                    </div>
+                    <span>Session 12 of 20</span>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

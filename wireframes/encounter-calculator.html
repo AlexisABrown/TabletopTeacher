@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Encounter Calculator - Wireframe</title>
+    <link rel="stylesheet" href="../InkFiles/style.css">
+    <link rel="stylesheet" href="wireframe-styles.css">
+    <style>
+        /* Encounter-specific styles */
+        .difficulty-meter {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .difficulty-marker {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: var(--color-accent);
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+        }
+
+        .difficulty-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--color-muted);
+        }
+
+        .monster-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: rgba(164, 180, 188, 0.1);
+            border-radius: 8px;
+        }
+
+        .monster-card {
+            background: white;
+            border: 1px solid var(--color-light);
+            border-radius: 6px;
+            padding: 0.75rem;
+            cursor: grab;
+            transition: all 0.2s ease;
+        }
+
+        .monster-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .party-member {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: white;
+            border: 1px solid var(--color-light);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="wireframe-container">
+        <!-- Monster Selection Sidebar -->
+        <aside class="wireframe-sidebar">
+            <input type="search" class="search-bar" placeholder="Search monsters...">
+            
+            <div class="tag-list">
+                <span class="tag">CR 0-4</span>
+                <span class="tag">CR 5-10</span>
+                <span class="tag">CR 11+</span>
+                <span class="tag">Dragons</span>
+                <span class="tag">Undead</span>
+            </div>
+
+            <div class="monster-list">
+                <div class="monster-card">
+                    <h4>Ancient Red Dragon</h4>
+                    <div style="color: var(--color-muted);">CR 24 | Huge Dragon</div>
+                </div>
+                <div class="monster-card">
+                    <h4>Goblin</h4>
+                    <div style="color: var(--color-muted);">CR 1/4 | Small Humanoid</div>
+                </div>
+                <div class="monster-card">
+                    <h4>Beholder</h4>
+                    <div style="color: var(--color-muted);">CR 13 | Large Aberration</div>
+                </div>
+                <!-- More monster cards... -->
+            </div>
+        </aside>
+
+        <!-- Main Calculator Area -->
+        <main class="wireframe-main">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h1>Encounter Calculator</h1>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="action-button" style="width: auto;">💾 Save</button>
+                    <button class="action-button" style="width: auto;">🔄 Reset</button>
+                </div>
+            </div>
+
+            <!-- Party Configuration -->
+            <section style="margin-bottom: 3rem;">
+                <h2>Party Setup</h2>
+                <div style="display: flex; gap: 2rem; margin-top: 1rem;">
+                    <div style="flex: 1;">
+                        <h3>Current Party</h3>
+                        <div class="party-member">
+                            <span>👤</span>
+                            <div style="flex: 1;">
+                                <div>Fighter</div>
+                                <div style="color: var(--color-muted);">Level 5</div>
+                            </div>
+                            <button style="background: none; border: none;">✖️</button>
+                        </div>
+                        <div class="party-member">
+                            <span>👤</span>
+                            <div style="flex: 1;">
+                                <div>Wizard</div>
+                                <div style="color: var(--color-muted);">Level 5</div>
+                            </div>
+                            <button style="background: none; border: none;">✖️</button>
+                        </div>
+                        <button class="action-button" style="margin-top: 1rem;">+ Add Character</button>
+                    </div>
+
+                    <div style="flex: 1;">
+                        <h3>Party Stats</h3>
+                        <div style="background: rgba(164, 180, 188, 0.1); padding: 1rem; border-radius: 8px;">
+                            <div style="margin-bottom: 0.5rem;">
+                                <strong>Average Level:</strong> 5
+                            </div>
+                            <div style="margin-bottom: 0.5rem;">
+                                <strong>Party Size:</strong> 4 players
+                            </div>
+                            <div>
+                                <strong>Total XP Threshold:</strong>
+                                <div style="color: var(--color-muted);">
+                                    Easy: 500 XP<br>
+                                    Medium: 1000 XP<br>
+                                    Hard: 1500 XP<br>
+                                    Deadly: 2000 XP
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Encounter Builder -->
+            <section>
+                <h2>Encounter Difficulty</h2>
+                <div class="difficulty-meter">
+                    <div class="difficulty-marker" style="left: 60%;"></div>
+                </div>
+                <div class="difficulty-labels">
+                    <span>Easy</span>
+                    <span>Medium</span>
+                    <span>Hard</span>
+                    <span>Deadly</span>
+                </div>
+
+                <!-- Selected Monsters -->
+                <div style="margin-top: 2rem;">
+                    <h3>Selected Monsters</h3>
+                    <div class="card-grid">
+                        <div class="monster-card">
+                            <div style="display: flex; justify-content: space-between;">
+                                <h4>Goblin</h4>
+                                <div>x3</div>
+                            </div>
+                            <div style="color: var(--color-muted);">CR 1/4 | 50 XP each</div>
+                        </div>
+                        <div class="monster-card">
+                            <div style="display: flex; justify-content: space-between;">
+                                <h4>Bugbear</h4>
+                                <div>x1</div>
+                            </div>
+                            <div style="color: var(--color-muted);">CR 1 | 200 XP</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Encounter Summary -->
+                <div style="margin-top: 2rem; padding: 1rem; background: rgba(219, 130, 134, 0.1); border-radius: 8px;">
+                    <h3>Encounter Summary</h3>
+                    <div style="display: flex; gap: 2rem;">
+                        <div>
+                            <strong>Total XP:</strong> 350 XP
+                        </div>
+                        <div>
+                            <strong>Adjusted XP:</strong> 525 XP
+                        </div>
+                        <div>
+                            <strong>Difficulty:</strong> Medium
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

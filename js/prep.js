@@ -437,7 +437,7 @@ function enableDownload(session) {
         }
 
         // Build textual content
-     let lines = [];
+      let lines = [];
     if (session.title && session.title.length) lines.push(`Title: ${session.title}`);
     else lines.push('Session');
         lines.push(`Setting: ${session.setting}`);

@@ -1,0 +1,127 @@
+/* Wireframe-specific styles */
+.wireframe-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: flex;
+    gap: 2rem;
+}
+
+.wireframe-sidebar {
+    width: 280px;
+    background: var(--color-white);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-soft);
+    height: calc(100vh - 4rem);
+    position: sticky;
+    top: 2rem;
+}
+
+.wireframe-main {
+    flex: 1;
+    background: var(--color-white);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-soft);
+}
+
+.search-bar {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-light);
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+}
+
+.tag-list {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.tag {
+    background: var(--color-light);
+    color: var(--color-dark);
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.9rem;
+}
+
+.action-button {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-item {
+    padding: 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+}
+
+.nav-item:hover {
+    background: rgba(219, 130, 134, 0.1);
+}
+
+.nav-item.active {
+    background: var(--color-accent);
+    color: white;
+}
+
+/* Grid layouts */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.card {
+    background: white;
+    border: 1px solid var(--color-light);
+    border-radius: 6px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+/* Placeholder elements */
+.placeholder-image {
+    width: 100%;
+    height: 150px;
+    background: var(--color-light);
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.placeholder-text {
+    height: 1rem;
+    background: var(--color-light);
+    border-radius: 2px;
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+}
+
+.placeholder-text.short { width: 60%; }
+.placeholder-text.medium { width: 80%; }
+.placeholder-text.long { width: 100%; }
